@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "608264898056",
+    "project_id": "lec6-81900",
+    "storage_bucket": "lec6-81900.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:608264898056:android:c8906784a803e874da73bd",
+        "android_client_info": {
+          "package_name": "com.example.lec_6"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKy5TxoR4iypFfq9TTzHlF7OAuX-QSA-I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
