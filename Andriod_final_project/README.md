@@ -114,19 +114,7 @@ The app uses a **global light/dark theme** setup with full support for:
   - AppBar (`CustomAppBar`)
 - The AppBar and buttons share consistent theming via conditional colors
 
----
 
-## 💡 Technologies Used
-
-- Flutter
-- Dart
-- Material Design
-- Dark Mode theming
-- Stateful Widgets + AnimationController
-
----
-
-## 📂 Project Structure (so far)
 
 
 
