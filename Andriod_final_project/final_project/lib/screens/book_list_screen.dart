@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/book_tile.dart';
 
@@ -55,25 +56,40 @@ class _BookListScreenState extends State<BookListScreen> {
       ),
       body: Stack(
         children: [
-          // Book list with bottom padding
           Padding(
             padding: const EdgeInsets.only(bottom: 80),
-            child: ListView(
-              padding: const EdgeInsets.only(top: 16),
-              children: showWordBooks
-                  ? const [
-                      BookTile(title: "Word Book 1 - Colors", format: "Word"),
-                      BookTile(title: "Word Book 2 - Animals", format: "Word"),
-                      BookTile(title: "Word Book 3 - Numbers", format: "Word"),
-                    ]
-                  : const [
-                      BookTile(title: "PDF Book 1 - Shapes", format: "PDF"),
-                      BookTile(title: "PDF Book 2 - Letters", format: "PDF"),
-                      BookTile(title: "PDF Book 3 - Time", format: "PDF"),
-                    ],
+            child: StreamBuilder<DatabaseEvent>(
+              stream: FirebaseDatabase.instance.ref('stories').onValue,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final storiesData =
+                    Map<String, dynamic>.from(snapshot.data!.snapshot.value as Map);
+
+                // Filter stories for this age group
+                final filteredStories = storiesData.values
+                    .where((story) =>
+                        story['ageGroup'] == widget.ageGroup)
+                    .take(2) // Only 2 books per age group
+                    .toList();
+
+                // Decide format and url
+                final format = showWordBooks ? "Word" : "PDF";
+                return ListView(
+                  padding: const EdgeInsets.only(top: 16),
+                  children: filteredStories.map<Widget>((story) {
+                    String url = showWordBooks ? story['docxUrl'] : story['pdfUrl'];
+                    return BookTile(
+                      title: story['title'],
+                      format: format,
+                      url: url,
+                    );
+                  }).toList(),
+                );
+              },
             ),
           ),
-
           // Centered bottom upload button
           Align(
             alignment: Alignment.bottomCenter,
@@ -84,6 +100,7 @@ class _BookListScreenState extends State<BookListScreen> {
                 height: 48,
                 child: ElevatedButton.icon(
                   onPressed: () {
+                    // Add your upload functionality here if needed
                   },
                   icon: const Icon(Icons.upload_file),
                   label: const Text("Upload Book"),
