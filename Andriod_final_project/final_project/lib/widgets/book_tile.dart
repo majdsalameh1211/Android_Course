@@ -1,3 +1,5 @@
+// lib/widgets/book_tile.dart
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -13,13 +15,12 @@ class BookTile extends StatelessWidget {
     required this.url,
   });
 
-  void _openFile(BuildContext context) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+  void handleOpen(BuildContext context) async {
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.platformDefault); // To open the URL in default browser or app
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Could not open the file")),
+        SnackBar(content: Text("Could not open file")),
       );
     }
   }
@@ -27,8 +28,7 @@ class BookTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color backgroundColor =
-        isDark ? const Color(0xFF0D47A1) : Colors.blue[50]!;
+    final Color backgroundColor = isDark ? const Color(0xFF0D47A1) : Colors.blue[50]!;
     final Color textColor = isDark ? Colors.white : Colors.black87;
 
     return Container(
@@ -55,7 +55,9 @@ class BookTile extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              format == "PDF" ? Icons.picture_as_pdf : Icons.description,
+              format == "PDF"
+                  ? Icons.picture_as_pdf
+                  : Icons.description,
               size: 32,
               color: Colors.white,
             ),
@@ -80,15 +82,17 @@ class BookTile extends StatelessWidget {
                   child: SizedBox(
                     height: 36,
                     child: ElevatedButton(
-                      onPressed: () => _openFile(context),
+                      onPressed: () => handleOpen(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Text("Download ${format.toUpperCase()}",
-                          style: const TextStyle(color: Colors.white)),
+                      child: Text(
+                        "OPEN",
+                        style: const TextStyle(color: Colors.white),
+                      ),
                     ),
                   ),
                 ),

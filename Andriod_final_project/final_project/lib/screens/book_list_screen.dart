@@ -13,12 +13,27 @@ class BookListScreen extends StatefulWidget {
 }
 
 class _BookListScreenState extends State<BookListScreen> {
-  bool showWordBooks = true;
+  bool showWordBooks = true; // Toggle between Word and PDF
+
+  Future<List<Map<String, dynamic>>> fetchStories() async {
+    final ref = FirebaseDatabase.instance.ref('stories');
+    final snapshot = await ref.get();
+    List<Map<String, dynamic>> result = [];
+    if (snapshot.exists) {
+      final data = Map<String, dynamic>.from(snapshot.value as Map);
+      data.forEach((key, value) {
+        final story = Map<String, dynamic>.from(value);
+        if (story['ageGroup'] == widget.ageGroup) {
+          result.add(story);
+        }
+      });
+    }
+    return result;
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     final Color buttonColor =
         isDark ? const Color(0xFF0D47A1) : const Color(0xFFB3E5FC);
     final Color textColor = isDark ? Colors.white : Colors.blue[900]!;
@@ -56,34 +71,31 @@ class _BookListScreenState extends State<BookListScreen> {
       ),
       body: Stack(
         children: [
+          // Main book list content with bottom padding for button
           Padding(
             padding: const EdgeInsets.only(bottom: 80),
-            child: StreamBuilder<DatabaseEvent>(
-              stream: FirebaseDatabase.instance.ref('stories').onValue,
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: fetchStories(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                final storiesData =
-                    Map<String, dynamic>.from(snapshot.data!.snapshot.value as Map);
-
-                // Filter stories for this age group
-                final filteredStories = storiesData.values
-                    .where((story) =>
-                        story['ageGroup'] == widget.ageGroup)
-                    .take(2) // Only 2 books per age group
-                    .toList();
-
-                // Decide format and url
-                final format = showWordBooks ? "Word" : "PDF";
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                final stories = snapshot.data ?? [];
+                if (stories.isEmpty) {
+                  return const Center(child: Text('No books found.'));
+                }
                 return ListView(
                   padding: const EdgeInsets.only(top: 16),
-                  children: filteredStories.map<Widget>((story) {
-                    String url = showWordBooks ? story['docxUrl'] : story['pdfUrl'];
+                  children: stories.map((story) {
+                    final url = showWordBooks ? story['docxUrl'] : story['pdfUrl'];
+                    final format = showWordBooks ? "Word" : "PDF";
                     return BookTile(
-                      title: story['title'],
+                      title: story['title'] ?? '',
                       format: format,
-                      url: url,
+                      url: url ?? '',
                     );
                   }).toList(),
                 );
@@ -100,7 +112,7 @@ class _BookListScreenState extends State<BookListScreen> {
                 height: 48,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // Add your upload functionality here if needed
+                    // Add your upload functionality here
                   },
                   icon: const Icon(Icons.upload_file),
                   label: const Text("Upload Book"),
