@@ -1,73 +1,34 @@
-import 'package:flutter/material.dart';
+// lib/widgets/book_tile.dart
 
-class BookTile extends StatefulWidget {
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+class BookTile extends StatelessWidget {
   final String title;
   final String format;
+  final String url;
 
   const BookTile({
     super.key,
     required this.title,
     required this.format,
+    required this.url,
   });
 
-  @override
-  State<BookTile> createState() => _BookTileState();
-}
-
-class _BookTileState extends State<BookTile>
-    with SingleTickerProviderStateMixin {
-  bool isDownloaded = false;
-  bool isLoading = false;
-late final AnimationController _controller;
-
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    );
-
-    _controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        setState(() {
-          isLoading = false;
-          isDownloaded = true;
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void handleDownload() {
-    if (isDownloaded || isLoading) return;
-
-    setState(() {
-      isLoading = true;
-    });
-    _controller.forward(from: 0); // Start the animation
-  }
-
-  void handleOpen() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Opening ${widget.title} (${widget.format})..."),
-      ),
-    );
+  void handleOpen(BuildContext context) async {
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.platformDefault); // To open the URL in default browser or app
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Could not open file")),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final Color backgroundColor =
-        isDark ? const Color(0xFF0D47A1) : Colors.blue[50]!;
+    final Color backgroundColor = isDark ? const Color(0xFF0D47A1) : Colors.blue[50]!;
     final Color textColor = isDark ? Colors.white : Colors.black87;
 
     return Container(
@@ -94,23 +55,21 @@ late final AnimationController _controller;
               shape: BoxShape.circle,
             ),
             child: Icon(
-              widget.format == "PDF"
+              format == "PDF"
                   ? Icons.picture_as_pdf
                   : Icons.description,
               size: 32,
               color: Colors.white,
             ),
           ),
-
           const SizedBox(width: 12),
-
           // Title + Button
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.title,
+                  title,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -123,44 +82,17 @@ late final AnimationController _controller;
                   child: SizedBox(
                     height: 36,
                     child: ElevatedButton(
-                      onPressed: isLoading
-                          ? null
-                          : isDownloaded
-                              ? handleOpen
-                              : handleDownload,
+                      onPressed: () => handleOpen(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            isDownloaded ? Colors.green : Colors.blue,
+                        backgroundColor: Colors.blue,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: isLoading
-                          ? AnimatedBuilder(
-                              animation: _controller,
-                              builder: (context, child) {
-                                return Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    SizedBox(
-                                      width: 22,
-                                      height: 22,
-                                      child: CircularProgressIndicator(
-                                        value: _controller.value,
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const Icon(Icons.stop,
-                                        size: 12, color: Colors.white),
-                                  ],
-                                );
-                              },
-                            )
-                          : Text(
-                              isDownloaded ? "OPEN" : "GET",
-                              style: const TextStyle(color: Colors.white),
-                            ),
+                      child: Text(
+                        "OPEN",
+                        style: const TextStyle(color: Colors.white),
+                      ),
                     ),
                   ),
                 ),
